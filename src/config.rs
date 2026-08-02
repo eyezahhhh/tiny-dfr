@@ -19,6 +19,7 @@ const USER_CFG_PATH: &str = "/etc/tiny-dfr/config.toml";
 pub struct Config {
     pub show_button_outlines: bool,
     pub enable_pixel_shift: bool,
+    pub enable_sleep: bool,
     pub font_face: FontFace,
     pub adaptive_brightness: bool,
     pub active_brightness: u32,
@@ -31,6 +32,7 @@ struct ConfigProxy {
     media_layer_default: Option<bool>,
     show_button_outlines: Option<bool>,
     enable_pixel_shift: Option<bool>,
+    enable_sleep: Option<bool>,
     font_template: Option<String>,
     adaptive_brightness: Option<bool>,
     active_brightness: Option<u32>,
@@ -109,6 +111,7 @@ fn load_config(width: u16) -> (Config, [FunctionLayer; 2]) {
         base.media_layer_default = user.media_layer_default.or(base.media_layer_default);
         base.show_button_outlines = user.show_button_outlines.or(base.show_button_outlines);
         base.enable_pixel_shift = user.enable_pixel_shift.or(base.enable_pixel_shift);
+        base.enable_sleep = user.enable_sleep.or(base.enable_sleep);
         base.font_template = user.font_template.or(base.font_template);
         base.adaptive_brightness = user.adaptive_brightness.or(base.adaptive_brightness);
         base.media_layer_keys = user.media_layer_keys.or(base.media_layer_keys);
@@ -147,6 +150,7 @@ fn load_config(width: u16) -> (Config, [FunctionLayer; 2]) {
     let cfg = Config {
         show_button_outlines: base.show_button_outlines.unwrap(),
         enable_pixel_shift: base.enable_pixel_shift.unwrap(),
+        enable_sleep: base.enable_sleep.unwrap_or(true),
         adaptive_brightness: base.adaptive_brightness.unwrap(),
         font_face: load_font(&base.font_template.unwrap()),
         active_brightness: base.active_brightness.unwrap(),

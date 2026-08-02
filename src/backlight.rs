@@ -133,7 +133,7 @@ impl BacklightManager {
                 } else {
                     cfg.active_brightness
                 }
-            } else if since_last_active < BRIGHTNESS_OFF_TIMEOUT as u64 {
+            } else if !cfg.enable_sleep || since_last_active < BRIGHTNESS_OFF_TIMEOUT as u64 {
                 DIMMED_BRIGHTNESS
             } else {
                 0
