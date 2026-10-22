@@ -840,6 +840,17 @@ fn main() {
     sigset.wait().unwrap();
 }
 
+fn blank_display(drm: &mut DrmBackend, surface: &mut ImageSurface, width: u16, height: u16) {
+    {
+        let c = Context::new(&*surface).unwrap();
+        c.set_source_rgb(0.0, 0.0, 0.0);
+        c.paint().unwrap();
+    }
+    let data = surface.data().unwrap();
+    drm.map().unwrap().as_mut()[..data.len()].copy_from_slice(&data);
+    drm.dirty(&[ClipRect::new(0, 0, height, width)]).unwrap();
+}
+
 fn real_main(drm: &mut DrmBackend) {
     let (height, width) = drm.mode().size();
     let (db_width, db_height) = drm.fb_info().unwrap().size();
@@ -863,6 +874,7 @@ fn real_main(drm: &mut DrmBackend) {
         ImageSurface::create(Format::ARgb32, db_width as i32, db_height as i32).unwrap();
     let mut active_layer = 0;
     let mut needs_complete_redraw = true;
+    let mut blanked = false;
 
     let mut input_tb = Libinput::new_with_udev(Interface);
     let mut input_main = Libinput::new_with_udev(Interface);
@@ -952,7 +964,9 @@ fn real_main(drm: &mut DrmBackend) {
             }
         }
 
-        if needs_complete_redraw || layers[active_layer].buttons.iter().any(|b| b.1.changed) {
+        if !blanked
+            && (needs_complete_redraw || layers[active_layer].buttons.iter().any(|b| b.1.changed))
+        {
             let shift = if cfg.enable_pixel_shift {
                 pixel_shift.get()
             } else {
@@ -1012,7 +1026,7 @@ fn real_main(drm: &mut DrmBackend) {
                     }
                 }
                 Event::Touch(te) => {
-                    if Some(te.device()) != digitizer || backlight.current_bl() == 0 {
+                    if Some(te.device()) != digitizer || blanked {
                         continue;
                     }
                     match te {
@@ -1052,6 +1066,14 @@ fn real_main(drm: &mut DrmBackend) {
                 _ => {}
             }
         }
-        backlight.update_backlight(&cfg);
+        let sleeping = backlight.update_backlight(&cfg);
+        if sleeping != blanked {
+            blanked = sleeping;
+            if blanked {
+                blank_display(drm, &mut surface, width, height);
+            } else {
+                needs_complete_redraw = true;
+            }
+        }
     }
 }

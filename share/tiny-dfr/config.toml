@@ -35,6 +35,13 @@ AdaptiveBrightness = true
 # Accepted values are 0-255
 ActiveBrightness = 128
 
+# The lowest brightness the touchbar may use in any state, including when
+# the lid is closed or after the inactivity sleep timeout when EnableSleep
+# is true. While asleep the screen contents are blanked and the brightness
+# is held at this minimum, so the bar looks off without flickering.
+# Accepted values are 0-255. Set to 0 to allow the bar to turn fully off.
+MinimumBrightness = 0
+
 # With a quick double press of the FN key switch the default layer.
 # 0 disables the feature, >0 defines how quick the double press must be in ms.
 # A sensible value to try is around 200.

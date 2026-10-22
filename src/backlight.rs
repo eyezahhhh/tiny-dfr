@@ -116,9 +116,11 @@ impl BacklightManager {
             _ => {}
         }
     }
-    pub fn update_backlight(&mut self, cfg: &Config) {
+    pub fn update_backlight(&mut self, cfg: &Config) -> bool {
         let since_last_active = (Instant::now() - self.last_active).as_millis() as u64;
-        let new_bl = min(
+        let sleeping = self.lid_state == SwitchState::On
+            || (cfg.enable_sleep && since_last_active >= BRIGHTNESS_OFF_TIMEOUT as u64);
+        let mut new_bl = min(
             self.max_bl,
             if self.lid_state == SwitchState::On {
                 0
@@ -139,12 +141,11 @@ impl BacklightManager {
                 0
             },
         );
+        new_bl = new_bl.max(cfg.minimum_brightness.min(self.max_bl));
         if self.current_bl != new_bl {
             self.current_bl = new_bl;
             set_backlight(&self.bl_file, self.current_bl);
         }
-    }
-    pub fn current_bl(&self) -> u32 {
-        self.current_bl
+        sleeping
     }
 }
